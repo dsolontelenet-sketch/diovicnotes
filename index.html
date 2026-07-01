@@ -71,6 +71,23 @@
   .hdr-space { flex:1; }
   #note-counter { font-family:'DM Mono',monospace; font-size:0.7rem; color:var(--ink-muted); background:var(--cream); border:1px solid var(--border); border-radius:20px; padding:0.2rem 0.7rem; }
 
+  /* USER BADGE */
+  #user-badge {
+    display:flex; align-items:center; gap:0.5rem;
+    background: var(--amber-pale); border:1px solid rgba(200,134,10,0.3);
+    border-radius:20px; padding:0.3rem 0.5rem 0.3rem 0.7rem;
+    cursor:pointer; transition:all 0.15s;
+  }
+  #user-badge:hover { background:#f5dca0; }
+  #user-badge .avatar {
+    width:20px; height:20px; border-radius:50%;
+    background:var(--amber); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'DM Mono',monospace; font-size:0.62rem; font-weight:600;
+  }
+  #user-badge .uname { font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--ink); font-weight:500; }
+  #user-badge .switch-hint { font-size:0.6rem; color:var(--ink-muted); }
+
   /* BUTTONS */
   .btn { padding:0.5rem 1.1rem; border-radius:8px; border:none; cursor:pointer; font-family:'DM Mono',monospace; font-size:0.75rem; font-weight:500; letter-spacing:0.04em; transition:all 0.15s; display:flex; align-items:center; gap:0.4rem; }
   .btn-primary { background:var(--amber); color:#fff; }
@@ -80,6 +97,7 @@
   .btn-red { background:transparent; color:var(--red); border:1px solid rgba(192,57,43,0.3); }
   .btn-red:hover { background:rgba(192,57,43,0.08); }
   .btn-sm { padding:0.35rem 0.8rem; font-size:0.7rem; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
 
   /* LAYOUT */
   .layout { display:grid; grid-template-columns:280px 1fr; height:calc(100vh - 60px); margin-top:60px; }
@@ -144,7 +162,7 @@
   #editor-panel { display:none; flex:1; flex-direction:column; overflow:hidden; }
   #editor-panel.show { display:flex; }
 
-  /* DELETE MODAL */
+  /* MODALS */
   .modal-bg { position:fixed; inset:0; background:rgba(26,22,18,0.55); backdrop-filter:blur(4px); z-index:500; display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.2s; }
   .modal-bg.show { opacity:1; pointer-events:auto; }
   .modal { background:var(--paper); border:1px solid var(--border); border-radius:14px; padding:2rem; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(26,22,18,0.25); transform:scale(0.95); transition:transform 0.2s; }
@@ -152,11 +170,58 @@
   .modal h3 { font-size:1.1rem; font-weight:400; font-style:italic; margin-bottom:0.6rem; }
   .modal p { font-family:'DM Mono',monospace; font-size:0.75rem; color:var(--ink-muted); line-height:1.7; margin-bottom:1.5rem; }
   .modal-actions { display:flex; gap:0.8rem; justify-content:flex-end; }
+  .modal input[type=text], .modal input[type=password], .modal select {
+    width:100%; padding:0.7rem 0.9rem; background:var(--cream);
+    border:1px solid var(--border); border-radius:8px;
+    font-family:'DM Mono',monospace; font-size:0.85rem; color:var(--ink);
+    outline:none; margin-bottom:1.2rem; transition:border-color 0.2s;
+  }
+  .modal input[type=text]:focus, .modal input[type=password]:focus, .modal select:focus { border-color:var(--amber); }
+  .modal .hint { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-muted); margin-top:-0.9rem; margin-bottom:1.2rem; line-height:1.6; }
+  .modal select { cursor:pointer; margin-bottom:0.6rem; }
+  .modal .or-divider { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.08em; margin:0.2rem 0 0.6rem; }
+  .modal .danger-text { color:var(--red) !important; }
+  #manage-users-btn { display:none; }
 </style>
 </head>
 <body>
 
 <div id="toasts"></div>
+
+<!-- USER MODAL (login / switch) -->
+<div class="modal-bg" id="user-modal">
+  <div class="modal">
+    <h3 id="user-modal-title">Who's taking notes?</h3>
+    <p id="user-modal-desc">Enter your name so your notes stay separate from everyone else's. You'll only see notes you created.</p>
+    <select id="existing-users-select">
+      <option value="">— or choose existing user —</option>
+    </select>
+    <div class="or-divider">— or type a new name —</div>
+    <input type="text" id="user-name-input" placeholder="e.g. Diovic" autocomplete="off">
+    <div class="hint">Tip: use the exact same name every time you come back, so you keep seeing your own notes.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="cancel-user" style="display:none;">Cancel</button>
+      <button class="btn btn-primary btn-sm" id="confirm-user">Continue →</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE / DELETE USER MODAL (Diovic only) -->
+<div class="modal-bg" id="delete-user-modal">
+  <div class="modal">
+    <h3 class="danger-text">Delete a user</h3>
+    <p>This permanently deletes the selected user <strong>and all of their notes</strong>. This cannot be undone. Only Diovic can do this.</p>
+    <select id="delete-user-select">
+      <option value="">— choose a user —</option>
+    </select>
+    <input type="password" id="delete-user-password" placeholder="Type Delete to confirm" autocomplete="off">
+    <div class="hint">Password-protected: type <strong>Delete</strong> exactly to enable the button.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="cancel-delete-user">Cancel</button>
+      <button class="btn btn-red btn-sm" id="confirm-delete-user" disabled>🗑 Delete User & Notes</button>
+    </div>
+  </div>
+</div>
 
 <!-- DELETE MODAL -->
 <div class="modal-bg" id="del-modal">
@@ -181,6 +246,11 @@
   </div>
   <div class="hdr-space"></div>
   <span id="note-counter">0 notes</span>
+  <div id="user-badge" title="Click to switch user">
+    <span class="avatar" id="user-avatar">?</span>
+    <span class="uname" id="user-name-label">—</span>
+  </div>
+  <button class="btn btn-red" id="manage-users-btn" title="Diovic only">👥 Manage Users</button>
   <button class="btn btn-primary" id="new-note-btn">＋ New Note</button>
 </header>
 
@@ -254,11 +324,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 const COLL = "notes";
+const USER_STORAGE_KEY = "mynotes_current_user";
+const LEGACY_OWNER = "Diovic"; // notes created before multi-user support are treated as this user's
 
 let allNotes = [];
 let currentId = null;
 let isDirty = false;
 let deleteTarget = null;
+let currentUser = null;
+let listenerStarted = false;
 
 // ── TOAST ──
 function toast(msg, type = 'info') {
@@ -292,37 +366,218 @@ function fmtDate(d) {
   return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-// ── REAL-TIME LISTENER ──
-const q = query(collection(db, COLL), orderBy('updatedAt','desc'));
-onSnapshot(q,
-  snap => {
-    setStatus(true, 'Connected');
-    allNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    document.getElementById('note-counter').textContent = allNotes.length + (allNotes.length===1?' note':' notes');
-    renderList();
-    if (currentId && !allNotes.find(n => n.id === currentId)) {
-      deselectNote();
-      toast('Note was deleted externally.','warning');
-    }
-  },
-  err => {
-    setStatus(false, 'Offline');
-    toast('Firestore error: ' + err.message,'error');
+// ── USER / IDENTITY ──
+function normalizeUser(name) {
+  return String(name || '').trim();
+}
+
+function ownerMatchesCurrentUser(noteOwner) {
+  const owner = normalizeUser(noteOwner);
+  const me = normalizeUser(currentUser);
+  if (!owner) {
+    // Legacy notes with no owner field belong to the legacy user (Diovic)
+    return me.toLowerCase() === LEGACY_OWNER.toLowerCase();
   }
-);
+  return owner.toLowerCase() === me.toLowerCase();
+}
+
+function isDiovic() {
+  return normalizeUser(currentUser).toLowerCase() === LEGACY_OWNER.toLowerCase();
+}
+
+function updateUserBadge() {
+  const label = document.getElementById('user-name-label');
+  const avatar = document.getElementById('user-avatar');
+  label.textContent = currentUser || '—';
+  avatar.textContent = currentUser ? currentUser.trim().charAt(0).toUpperCase() : '?';
+  document.getElementById('manage-users-btn').style.display = isDiovic() ? 'inline-flex' : 'none';
+}
+
+// Collect every known user across all notes, always including Diovic
+function getExistingUsers() {
+  const set = new Set([LEGACY_OWNER]);
+  allNotes.forEach(n => {
+    const o = normalizeUser(n.owner) || LEGACY_OWNER;
+    set.add(o);
+  });
+  return Array.from(set).sort((a,b) => a.localeCompare(b));
+}
+
+function populateUserDropdown() {
+  const select = document.getElementById('existing-users-select');
+  const users = getExistingUsers();
+  select.innerHTML = '<option value="">— or choose existing user —</option>' +
+    users.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  select.value = '';
+}
+
+function openUserModal(isSwitch) {
+  const modal = document.getElementById('user-modal');
+  const title = document.getElementById('user-modal-title');
+  const desc = document.getElementById('user-modal-desc');
+  const cancelBtn = document.getElementById('cancel-user');
+  const input = document.getElementById('user-name-input');
+
+  if (isSwitch) {
+    title.textContent = 'Switch user';
+    desc.textContent = "Switching will show only that person's notes. Your own notes stay safe and hidden from others.";
+    cancelBtn.style.display = 'inline-flex';
+    input.value = currentUser || '';
+  } else {
+    title.textContent = "Who's taking notes?";
+    desc.textContent = "Enter your name so your notes stay separate from everyone else's. You'll only see notes you created.";
+    cancelBtn.style.display = 'none';
+    input.value = '';
+  }
+  populateUserDropdown();
+  modal.classList.add('show');
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeUserModal() {
+  document.getElementById('user-modal').classList.remove('show');
+}
+
+function confirmUser() {
+  const input = document.getElementById('user-name-input');
+  const name = normalizeUser(input.value);
+  if (!name) {
+    toast('Please enter a name.', 'warning');
+    return;
+  }
+  const switchingUser = currentUser !== null && normalizeUser(currentUser).toLowerCase() !== name.toLowerCase();
+  currentUser = name;
+  localStorage.setItem(USER_STORAGE_KEY, currentUser);
+  updateUserBadge();
+  closeUserModal();
+
+  // Leaving the currently open note if it doesn't belong to the new user
+  deselectNote();
+
+  if (!listenerStarted) {
+    startListener();
+  } else {
+    renderList();
+  }
+
+  if (switchingUser) {
+    toast(`Switched to ${currentUser} 👋`, 'info');
+  } else {
+    toast(`Welcome, ${currentUser}! 👋`, 'success');
+  }
+}
+
+// ── MANAGE / DELETE USER (Diovic only) ──
+function populateDeleteUserSelect() {
+  const select = document.getElementById('delete-user-select');
+  const users = getExistingUsers().filter(u => u.toLowerCase() !== LEGACY_OWNER.toLowerCase());
+  if (!users.length) {
+    select.innerHTML = '<option value="">No other users yet</option>';
+  } else {
+    select.innerHTML = '<option value="">— choose a user —</option>' +
+      users.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
+  }
+}
+
+function openDeleteUserModal() {
+  if (!isDiovic()) {
+    toast('Only Diovic can manage users.', 'error');
+    return;
+  }
+  populateDeleteUserSelect();
+  document.getElementById('delete-user-password').value = '';
+  updateDeleteUserButtonState();
+  document.getElementById('delete-user-modal').classList.add('show');
+}
+
+function closeDeleteUserModal() {
+  document.getElementById('delete-user-modal').classList.remove('show');
+}
+
+function updateDeleteUserButtonState() {
+  const user = document.getElementById('delete-user-select').value;
+  const pass = document.getElementById('delete-user-password').value;
+  document.getElementById('confirm-delete-user').disabled = !(user && pass === 'Delete');
+}
+
+async function confirmDeleteUser() {
+  if (!isDiovic()) {
+    toast('Only Diovic can manage users.', 'error');
+    return;
+  }
+  const targetUser = document.getElementById('delete-user-select').value;
+  const password = document.getElementById('delete-user-password').value;
+  if (!targetUser) { toast('Choose a user to delete.', 'warning'); return; }
+  if (password !== 'Delete') { toast('Incorrect password.', 'error'); return; }
+  if (!confirm(`Delete "${targetUser}" and ALL of their notes? This cannot be undone.`)) return;
+
+  const notesToDelete = allNotes.filter(n => normalizeUser(n.owner).toLowerCase() === targetUser.toLowerCase());
+  setLoading(true);
+  try {
+    for (const n of notesToDelete) {
+      await deleteDoc(doc(db, COLL, n.id));
+      if (currentId === n.id) {
+        currentId = null;
+        document.getElementById('editor-panel').classList.remove('show');
+        document.getElementById('empty-state').style.display = 'flex';
+      }
+    }
+    closeDeleteUserModal();
+    toast(`User "${targetUser}" and ${notesToDelete.length} note(s) deleted.`, 'warning');
+  } catch(e) {
+    toast('Error deleting user: ' + e.message, 'error');
+  }
+  setLoading(false);
+}
+
+// ── REAL-TIME LISTENER ──
+function startListener() {
+  listenerStarted = true;
+  const q = query(collection(db, COLL), orderBy('updatedAt','desc'));
+  onSnapshot(q,
+    snap => {
+      setStatus(true, 'Connected');
+      allNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      updateCounter();
+      renderList();
+      if (currentId && !allNotes.find(n => n.id === currentId && ownerMatchesCurrentUser(n.owner))) {
+        deselectNote();
+        toast('Note was deleted or is no longer available.','warning');
+      }
+    },
+    err => {
+      setStatus(false, 'Offline');
+      toast('Firestore error: ' + err.message,'error');
+    }
+  );
+}
+
+function getVisibleNotes() {
+  return allNotes.filter(n => ownerMatchesCurrentUser(n.owner));
+}
+
+function updateCounter() {
+  const count = getVisibleNotes().length;
+  document.getElementById('note-counter').textContent = count + (count===1?' note':' notes');
+}
 
 // ── RENDER LIST ──
 function renderList() {
+  if (!currentUser) return;
   const q = document.getElementById('search-input').value.toLowerCase();
   const ul = document.getElementById('notes-list');
-  let list = allNotes;
-  if (q) list = allNotes.filter(n =>
+  let list = getVisibleNotes();
+  updateCounter();
+  if (q) list = list.filter(n =>
     (n.title||'').toLowerCase().includes(q) ||
     (n.body||'').toLowerCase().includes(q) ||
     (n.category||'').toLowerCase().includes(q)
   );
   if (!list.length) {
-    ul.innerHTML = `<div class="empty-list">${q?'No results found.':'No notes yet.<br>Create your first one!'}</div>`;
+    const emptyMsg = q
+      ? 'No results found.'
+      : `No notes yet for <strong>${esc(currentUser)}</strong>.<br>Create your first one!`;
+    ul.innerHTML = `<div class="empty-list">${emptyMsg}</div>`;
     return;
   }
   ul.innerHTML = list.map(n => {
@@ -347,10 +602,13 @@ function openNote(id) {
   if (isDirty && currentId) {
     if (!confirm('Unsaved changes — discard them?')) return;
   }
+  const n = allNotes.find(x => x.id === id);
+  if (!n || !ownerMatchesCurrentUser(n.owner)) {
+    toast("You don't have access to that note.", 'error');
+    return;
+  }
   currentId = id;
   isDirty = false;
-  const n = allNotes.find(x => x.id === id);
-  if (!n) return;
   showEditor();
   document.getElementById('note-title').value    = n.title    || '';
   document.getElementById('note-category').value = n.category || '';
@@ -365,6 +623,7 @@ function openNote(id) {
 
 // ── NEW NOTE ──
 async function newNote() {
+  if (!currentUser) { openUserModal(false); return; }
   if (isDirty && currentId) {
     if (!confirm('Unsaved changes — discard them?')) return;
   }
@@ -372,6 +631,7 @@ async function newNote() {
   try {
     const ref = await addDoc(collection(db, COLL), {
       title:'', body:'', category:'',
+      owner: currentUser,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
@@ -400,6 +660,7 @@ async function saveNote() {
   const category = document.getElementById('note-category').value.trim();
   setLoading(true);
   try {
+    // owner is intentionally not touched here — a note keeps its original creator
     await updateDoc(doc(db, COLL, currentId), { title, body, category, updatedAt: serverTimestamp() });
     isDirty = false;
     document.getElementById('unsaved-dot').classList.remove('show');
@@ -425,7 +686,7 @@ function closeModal() {
 async function confirmDelete() {
   if (!deleteTarget) return;
 
-  // FIX: Save the target ID locally BEFORE closing the modal or nulling deleteTarget
+  // Save the target ID locally BEFORE closing the modal or nulling deleteTarget
   const idToDelete = deleteTarget;
 
   // Close modal first (UI feedback)
@@ -436,7 +697,7 @@ async function confirmDelete() {
   try {
     await deleteDoc(doc(db, COLL, idToDelete));
 
-    // FIX: Compare against the saved local variable, not the already-nulled deleteTarget
+    // Compare against the saved local variable, not the already-nulled deleteTarget
     if (currentId === idToDelete) {
       currentId = null;
       isDirty = false;
@@ -494,10 +755,41 @@ document.getElementById('note-title').addEventListener('input', markDirty);
 document.getElementById('note-category').addEventListener('input', markDirty);
 document.getElementById('note-body').addEventListener('input', markDirty);
 
+document.getElementById('user-badge').addEventListener('click', () => openUserModal(true));
+document.getElementById('confirm-user').addEventListener('click', confirmUser);
+document.getElementById('cancel-user').addEventListener('click', closeUserModal);
+document.getElementById('user-name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); confirmUser(); }
+});
+document.getElementById('existing-users-select').addEventListener('change', e => {
+  if (e.target.value) document.getElementById('user-name-input').value = e.target.value;
+});
+
+document.getElementById('manage-users-btn').addEventListener('click', openDeleteUserModal);
+document.getElementById('cancel-delete-user').addEventListener('click', closeDeleteUserModal);
+document.getElementById('confirm-delete-user').addEventListener('click', confirmDeleteUser);
+document.getElementById('delete-user-select').addEventListener('change', updateDeleteUserButtonState);
+document.getElementById('delete-user-password').addEventListener('input', updateDeleteUserButtonState);
+document.getElementById('delete-user-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); confirmDeleteUser(); }
+});
+
 // Ctrl+S / Cmd+S
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); saveNote(); }
 });
+
+// ── BOOTSTRAP ──
+(function init() {
+  const saved = localStorage.getItem(USER_STORAGE_KEY);
+  if (saved) {
+    currentUser = normalizeUser(saved);
+    updateUserBadge();
+    startListener();
+  } else {
+    openUserModal(false);
+  }
+})();
 </script>
 </body>
 </html>
