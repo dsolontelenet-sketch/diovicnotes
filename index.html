@@ -120,6 +120,7 @@
   .ni-meta { display:flex; align-items:center; gap:0.5rem; }
   .ni-date { font-family:'DM Mono',monospace; font-size:0.62rem; color:var(--ink-muted); opacity:0.7; }
   .ni-cat { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--amber); background:var(--amber-pale); border-radius:10px; padding:0.05rem 0.4rem; }
+  .ni-imgs { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink-light); background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:0.05rem 0.4rem; }
   .empty-list { padding:2rem 1rem; text-align:center; color:var(--ink-muted); font-size:0.85rem; font-style:italic; line-height:1.8; }
 
   /* MAIN */
@@ -144,10 +145,50 @@
   #note-category { font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--amber); background:var(--amber-pale); border:1px solid rgba(200,134,10,0.25); border-radius:20px; padding:0.2rem 0.8rem; outline:none; width:160px; transition:border-color 0.2s; }
   #note-category:focus { border-color:var(--amber); }
   #note-category::placeholder { color:rgba(200,134,10,0.4); }
-  #note-body { flex:1; padding:0 2rem 1.5rem; font-family:'Fraunces',serif; font-size:0.98rem; font-weight:300; line-height:1.95; color:var(--ink-light); background:transparent; border:none; outline:none; resize:none; overflow-y:auto; }
+  #note-body { flex:1; padding:0 2rem 1rem; font-family:'Fraunces',serif; font-size:0.98rem; font-weight:300; line-height:1.95; color:var(--ink-light); background:transparent; border:none; outline:none; resize:none; overflow-y:auto; min-height:80px; }
   #note-body::-webkit-scrollbar { width:3px; }
   #note-body::-webkit-scrollbar-thumb { background:var(--border); }
   #note-body::placeholder { color:var(--ink-muted); font-style:italic; }
+
+  /* IMAGES BAR */
+  .images-bar {
+    display:flex; align-items:center; gap:0.6rem;
+    padding:0.8rem 2rem; overflow-x:auto; flex-shrink:0;
+    border-top:1px solid var(--border); background:var(--paper);
+  }
+  .images-bar::-webkit-scrollbar { height:4px; }
+  .images-bar::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .img-add-tile {
+    flex-shrink:0; width:56px; height:56px;
+    border:1.5px dashed var(--border); border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.4rem; font-weight:300; color:var(--ink-muted);
+    cursor:pointer; transition:all 0.15s; position:relative;
+  }
+  .img-add-tile:hover { border-color:var(--amber); color:var(--amber); background:var(--amber-pale); }
+  .img-add-tile input[type=file] {
+    position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+  }
+  .img-thumb {
+    position:relative; flex-shrink:0; width:56px; height:56px;
+    border-radius:10px; overflow:hidden; border:1px solid var(--border);
+    cursor:pointer; background:var(--cream);
+  }
+  .img-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+  .img-thumb.uploading img { opacity:0.35; }
+  .img-spinner {
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--amber); background:rgba(250,247,242,0.7);
+  }
+  .img-thumb.uploading .img-spinner { display:flex; }
+  .img-remove {
+    position:absolute; top:2px; right:2px; width:18px; height:18px;
+    border-radius:50%; border:none; background:rgba(26,22,18,0.72); color:#fff;
+    font-size:0.72rem; line-height:1; cursor:pointer; display:flex; align-items:center;
+    justify-content:center; opacity:0; transition:opacity 0.15s;
+  }
+  .img-thumb:hover .img-remove { opacity:1; }
+  .images-empty-hint { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-muted); }
 
   /* META BAR */
   .meta-bar { padding:0.5rem 2rem; border-top:1px solid var(--border); background:var(--paper); display:flex; align-items:center; gap:1.5rem; font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-muted); flex-shrink:0; }
@@ -182,6 +223,16 @@
   .modal .or-divider { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.08em; margin:0.2rem 0 0.6rem; }
   .modal .danger-text { color:var(--red) !important; }
   #manage-users-btn { display:none; }
+
+  /* LIGHTBOX */
+  #lightbox-modal .modal { background:transparent; box-shadow:none; padding:0; max-width:92vw; border:none; }
+  #lightbox-modal .lightbox-inner { position:relative; display:inline-block; }
+  #lightbox-img { max-width:90vw; max-height:85vh; border-radius:10px; box-shadow:0 20px 70px rgba(0,0,0,0.55); display:block; }
+  #lightbox-close {
+    position:absolute; top:-14px; right:-14px; width:32px; height:32px; border-radius:50%;
+    background:var(--paper); border:1px solid var(--border); color:var(--ink); font-size:1rem;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  }
 </style>
 </head>
 <body>
@@ -210,7 +261,7 @@
 <div class="modal-bg" id="delete-user-modal">
   <div class="modal">
     <h3 class="danger-text">Delete a user</h3>
-    <p>This permanently deletes the selected user <strong>and all of their notes</strong>. This cannot be undone. Only Diovic can do this.</p>
+    <p>This permanently deletes the selected user <strong>and all of their notes (including images)</strong>. This cannot be undone. Only Diovic can do this.</p>
     <select id="delete-user-select">
       <option value="">— choose a user —</option>
     </select>
@@ -227,10 +278,20 @@
 <div class="modal-bg" id="del-modal">
   <div class="modal">
     <h3>Delete this note?</h3>
-    <p>This action is permanent and cannot be undone. The note will be removed from your Firestore database.</p>
+    <p>This action is permanent and cannot be undone. The note and any attached images will be removed from your database.</p>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" id="cancel-del">Cancel</button>
       <button class="btn btn-red btn-sm" id="confirm-del">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX MODAL -->
+<div class="modal-bg" id="lightbox-modal">
+  <div class="modal">
+    <div class="lightbox-inner">
+      <button id="lightbox-close" title="Close">✕</button>
+      <img id="lightbox-img" src="" alt="Preview">
     </div>
   </div>
 </div>
@@ -294,6 +355,7 @@
           <input type="text" id="note-category" placeholder="e.g. work, ideas…">
         </div>
         <textarea id="note-body" placeholder="Start writing your note here…"></textarea>
+        <div class="images-bar" id="images-bar"></div>
       </div>
       <div class="meta-bar">
         <span id="meta-created">Created —</span>
@@ -308,8 +370,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, addDoc, doc,
-  updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy
+  updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy,
+  increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getDatabase, ref as dbRef, push as dbPush, set as dbSet, remove as dbRemove, onValue
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC7HlN4eGuvVD2Zdrw0JfeVvu2j-0qgwS4",
@@ -318,14 +384,26 @@ const firebaseConfig = {
   storageBucket: "notes-829ef.firebasestorage.app",
   messagingSenderId: "415144945367",
   appId: "1:415144945367:web:6003617d848fc37e0cb292",
-  measurementId: "G-FXP2YCC9NS"
+  measurementId: "G-FXP2YCC9NS",
+  databaseURL: "https://notes-829ef-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+const db   = getFirestore(app);
+const rtdb = getDatabase(app);
 const COLL = "notes";
 const USER_STORAGE_KEY = "mynotes_current_user";
 const LEGACY_OWNER = "Diovic"; // notes created before multi-user support are treated as this user's
+
+// Image upload constraints — images are stored as base64 data URLs directly in the
+// Realtime Database at noteImages/{noteId}/{imageId}, since RTDB has no native blob storage.
+// Base64 inflates raw bytes by ~33%, so we compress harder than we would for a real object store.
+const MAX_IMAGE_MB = 5;                     // max size accepted from the file picker (pre-compression)
+const MAX_IMAGES_PER_NOTE = 20;             // guard against unbounded fan-out under a single note
+const MAX_ENCODED_CHARS = 7_000_000;        // ~5.25MB decoded; mirrors the RTDB rules validation below
+const COMPRESS_MAX_DIMENSION = 1280;        // px, longest side
+const COMPRESS_QUALITY = 0.75;              // JPEG quality
+const COMPRESS_SKIP_UNDER_BYTES = 150 * 1024; // don't bother compressing very small files
 
 let allNotes = [];
 let currentId = null;
@@ -333,6 +411,7 @@ let isDirty = false;
 let deleteTarget = null;
 let currentUser = null;
 let listenerStarted = false;
+let imagesUnsub = null; // unsubscribe fn for the currently-open note's RTDB image listener
 
 // ── TOAST ──
 function toast(msg, type = 'info') {
@@ -340,7 +419,7 @@ function toast(msg, type = 'info') {
   const t = document.createElement('div');
   t.className = `toast ${type}`;
   const icons = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
-  t.innerHTML = `<span>${icons[type]||'📌'}</span><span>${msg}</span>`;
+  t.innerHTML = `<span>${icons[type]||'📌'}</span><span>${esc(msg)}</span>`;
   wrap.appendChild(t);
   setTimeout(() => {
     t.classList.add('out');
@@ -500,6 +579,20 @@ function updateDeleteUserButtonState() {
   document.getElementById('confirm-delete-user').disabled = !(user && pass === 'Delete');
 }
 
+// Best-effort cleanup of a note's images node in Realtime Database. Failures are logged, not
+// fatal — an orphaned images node is far less harmful than a delete operation that never completes.
+async function clearNoteImages(noteId) {
+  try {
+    await dbRemove(dbRef(rtdb, `noteImages/${noteId}`));
+  } catch (e) {
+    console.warn(`Could not clear images for note ${noteId} (may already be gone):`, e);
+  }
+}
+
+async function clearImagesForNotes(notes) {
+  await Promise.allSettled(notes.map(n => clearNoteImages(n.id)));
+}
+
 async function confirmDeleteUser() {
   if (!isDiovic()) {
     toast('Only Diovic can manage users.', 'error');
@@ -509,14 +602,16 @@ async function confirmDeleteUser() {
   const password = document.getElementById('delete-user-password').value;
   if (!targetUser) { toast('Choose a user to delete.', 'warning'); return; }
   if (password !== 'Delete') { toast('Incorrect password.', 'error'); return; }
-  if (!confirm(`Delete "${targetUser}" and ALL of their notes? This cannot be undone.`)) return;
+  if (!confirm(`Delete "${targetUser}" and ALL of their notes (including images)? This cannot be undone.`)) return;
 
   const notesToDelete = allNotes.filter(n => normalizeUser(n.owner).toLowerCase() === targetUser.toLowerCase());
   setLoading(true);
   try {
+    await clearImagesForNotes(notesToDelete);
     for (const n of notesToDelete) {
       await deleteDoc(doc(db, COLL, n.id));
       if (currentId === n.id) {
+        detachImagesListener();
         currentId = null;
         document.getElementById('editor-panel').classList.remove('show');
         document.getElementById('empty-state').style.display = 'flex';
@@ -543,6 +638,12 @@ function startListener() {
       if (currentId && !allNotes.find(n => n.id === currentId && ownerMatchesCurrentUser(n.owner))) {
         deselectNote();
         toast('Note was deleted or is no longer available.','warning');
+      } else if (currentId) {
+        // Keep the "updated" timestamp in sync with live changes (images sync via their own RTDB listener)
+        const cur = allNotes.find(n => n.id === currentId);
+        if (cur) {
+          document.getElementById('meta-updated').textContent = 'Updated ' + (cur.updatedAt ? fmtDate(cur.updatedAt.toDate()) : '—');
+        }
       }
     },
     err => {
@@ -585,10 +686,12 @@ function renderList() {
     const date = n.updatedAt ? fmtDate(n.updatedAt.toDate()) : '—';
     const preview = (n.body||'').replace(/\n/g,' ').slice(0,65)||'No content';
     const catBadge = n.category ? `<span class="ni-cat">${esc(n.category)}</span>` : '';
+    const imgCount = n.imageCount || 0;
+    const imgBadge = imgCount ? `<span class="ni-imgs">📷 ${imgCount}</span>` : '';
     return `<div class="note-item${active}" data-id="${n.id}">
       <div class="ni-title">${esc(n.title||'Untitled')}</div>
       <div class="ni-preview">${esc(preview)}</div>
-      <div class="ni-meta">${catBadge}<span class="ni-date">${date}</span></div>
+      <div class="ni-meta">${catBadge}${imgBadge}<span class="ni-date">${date}</span></div>
     </div>`;
   }).join('');
 
@@ -617,6 +720,7 @@ function openNote(id) {
   document.getElementById('toolbar-label').textContent = n.title || 'Untitled';
   document.getElementById('meta-created').textContent = 'Created ' + (n.createdAt ? fmtDate(n.createdAt.toDate()) : '—');
   document.getElementById('meta-updated').textContent = 'Updated ' + (n.updatedAt ? fmtDate(n.updatedAt.toDate()) : '—');
+  attachImagesListener(id);
   updateWords();
   renderList();
 }
@@ -629,13 +733,13 @@ async function newNote() {
   }
   setLoading(true);
   try {
-    const ref = await addDoc(collection(db, COLL), {
-      title:'', body:'', category:'',
+    const newDocRef = await addDoc(collection(db, COLL), {
+      title:'', body:'', category:'', imageCount: 0,
       owner: currentUser,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
-    currentId = ref.id;
+    currentId = newDocRef.id;
     isDirty = false;
     showEditor();
     document.getElementById('note-title').value    = '';
@@ -646,6 +750,7 @@ async function newNote() {
     document.getElementById('toolbar-label').textContent = 'New note';
     document.getElementById('meta-created').textContent = 'Created just now';
     document.getElementById('meta-updated').textContent = 'Updated just now';
+    attachImagesListener(currentId);
     updateWords();
     toast('New note created! 📝','success');
   } catch(e) { toast('Error: ' + e.message,'error'); }
@@ -695,10 +800,12 @@ async function confirmDelete() {
 
   setLoading(true);
   try {
+    await clearNoteImages(idToDelete);
     await deleteDoc(doc(db, COLL, idToDelete));
 
     // Compare against the saved local variable, not the already-nulled deleteTarget
     if (currentId === idToDelete) {
+      detachImagesListener();
       currentId = null;
       isDirty = false;
       document.getElementById('editor-panel').classList.remove('show');
@@ -714,6 +821,7 @@ async function confirmDelete() {
 
 // ── DESELECT ──
 function deselectNote() {
+  detachImagesListener();
   currentId = null;
   isDirty = false;
   document.getElementById('editor-panel').classList.remove('show');
@@ -737,6 +845,175 @@ function updateWords() {
 function showEditor() {
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('editor-panel').classList.add('show');
+}
+
+// ── IMAGES (stored as base64 data URLs in Realtime Database) ──
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+// Downscale + re-encode large images client-side, then return a base64 data URL ready to
+// write straight into the Realtime Database. GIFs are read as-is to preserve animation.
+async function compressToDataUrl(file) {
+  if (file.type === 'image/gif' || typeof createImageBitmap !== 'function') {
+    return blobToDataUrl(file);
+  }
+  if (file.size < COMPRESS_SKIP_UNDER_BYTES) {
+    return blobToDataUrl(file);
+  }
+  try {
+    const bitmap = await createImageBitmap(file);
+    let { width, height } = bitmap;
+    const longest = Math.max(width, height);
+    if (longest > COMPRESS_MAX_DIMENSION) {
+      const scale = COMPRESS_MAX_DIMENSION / longest;
+      width = Math.round(width * scale);
+      height = Math.round(height * scale);
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', COMPRESS_QUALITY);
+  } catch (e) {
+    console.warn('Image compression skipped, using original:', e);
+    return blobToDataUrl(file);
+  }
+}
+
+async function handleImageFiles(fileList) {
+  if (!currentId) { toast('Open or create a note first.', 'warning'); return; }
+  const note = allNotes.find(n => n.id === currentId);
+  const existingCount = note?.imageCount || 0;
+
+  const files = Array.from(fileList).filter(f => {
+    if (!f.type.startsWith('image/')) { toast(`"${f.name}" is not an image.`, 'warning'); return false; }
+    if (f.size > MAX_IMAGE_MB * 1024 * 1024) { toast(`"${f.name}" exceeds ${MAX_IMAGE_MB}MB.`, 'warning'); return false; }
+    return true;
+  });
+  if (!files.length) return;
+
+  if (existingCount + files.length > MAX_IMAGES_PER_NOTE) {
+    toast(`This note can hold at most ${MAX_IMAGES_PER_NOTE} images.`, 'warning');
+    return;
+  }
+
+  setLoading(true);
+  let uploaded = 0;
+  for (const file of files) {
+    try {
+      const dataUrl = await compressToDataUrl(file);
+      if (dataUrl.length > MAX_ENCODED_CHARS) {
+        toast(`"${file.name}" is still too large after compression — try a smaller image.`, 'warning');
+        continue;
+      }
+      const newImageRef = dbPush(dbRef(rtdb, `noteImages/${currentId}`));
+      await dbSet(newImageRef, {
+        dataUrl,
+        name: file.name,
+        uploadedAt: Date.now()
+      });
+      await updateDoc(doc(db, COLL, currentId), {
+        imageCount: increment(1),
+        updatedAt: serverTimestamp()
+      });
+      uploaded++;
+    } catch (e) {
+      toast(`Failed to upload "${file.name}": ${e.message}`, 'error');
+    }
+  }
+  setLoading(false);
+  if (uploaded) toast(`${uploaded} image${uploaded!==1?'s':''} uploaded 📷`, 'success');
+}
+
+async function removeImage(imageKey) {
+  if (!currentId || !imageKey) return;
+  if (!confirm('Remove this image? This cannot be undone.')) return;
+
+  setLoading(true);
+  try {
+    await dbRemove(dbRef(rtdb, `noteImages/${currentId}/${imageKey}`));
+    await updateDoc(doc(db, COLL, currentId), {
+      imageCount: increment(-1),
+      updatedAt: serverTimestamp()
+    });
+    toast('Image removed', 'info');
+  } catch(e) {
+    toast('Error removing image: ' + e.message, 'error');
+  }
+  setLoading(false);
+}
+
+// Live-syncs the open note's image strip with noteImages/{noteId} in Realtime Database.
+function attachImagesListener(noteId) {
+  detachImagesListener();
+  if (!noteId) return;
+  const imagesRef = dbRef(rtdb, `noteImages/${noteId}`);
+  imagesUnsub = onValue(imagesRef, snap => {
+    const val = snap.val() || {};
+    const list = Object.entries(val)
+      .map(([key, v]) => ({ key, ...v }))
+      .sort((a, b) => (a.uploadedAt || 0) - (b.uploadedAt || 0));
+    renderImages(list);
+  }, err => {
+    toast('Error loading images: ' + err.message, 'error');
+  });
+}
+
+function detachImagesListener() {
+  if (imagesUnsub) { imagesUnsub(); imagesUnsub = null; }
+}
+
+function renderImages(images) {
+  const bar = document.getElementById('images-bar');
+  const list = Array.isArray(images) ? images : [];
+
+  const thumbs = list.map(img => `
+    <div class="img-thumb" data-key="${esc(img.key)}">
+      <img src="${img.dataUrl}" alt="${esc(img.name||'attached image')}" loading="lazy">
+      <button class="img-remove" data-key="${esc(img.key)}" title="Remove image">✕</button>
+    </div>
+  `).join('');
+
+  bar.innerHTML = `
+    <label class="img-add-tile" title="Add image (max ${MAX_IMAGE_MB}MB each)">
+      ＋
+      <input type="file" id="image-file-input" accept="image/*" multiple>
+    </label>
+    ${thumbs}
+    ${!list.length ? '<span class="images-empty-hint">Attach photos to this note</span>' : ''}
+  `;
+
+  document.getElementById('image-file-input').addEventListener('change', e => {
+    if (e.target.files && e.target.files.length) handleImageFiles(e.target.files);
+    e.target.value = '';
+  });
+
+  bar.querySelectorAll('.img-thumb img').forEach(im => {
+    im.addEventListener('click', () => openLightbox(im.src));
+  });
+  bar.querySelectorAll('.img-remove').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      removeImage(btn.dataset.key);
+    });
+  });
+}
+
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-modal').classList.add('show');
+}
+function closeLightbox() {
+  document.getElementById('lightbox-modal').classList.remove('show');
+  document.getElementById('lightbox-img').src = '';
 }
 
 // ── EVENTS ──
@@ -772,6 +1049,16 @@ document.getElementById('delete-user-select').addEventListener('change', updateD
 document.getElementById('delete-user-password').addEventListener('input', updateDeleteUserButtonState);
 document.getElementById('delete-user-password').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); confirmDeleteUser(); }
+});
+
+document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+document.getElementById('lightbox-modal').addEventListener('click', e => {
+  if (e.target.id === 'lightbox-modal') closeLightbox();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('lightbox-modal').classList.contains('show')) {
+    closeLightbox();
+  }
 });
 
 // Ctrl+S / Cmd+S
