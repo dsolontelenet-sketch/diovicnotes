@@ -98,9 +98,12 @@
   .btn-red:hover { background:rgba(192,57,43,0.08); }
   .btn-sm { padding:0.35rem 0.8rem; font-size:0.7rem; }
   .btn:disabled { opacity:0.5; cursor:not-allowed; }
-  /* Active pin state for the toolbar pin button */
+  
+  /* Active states */
   .btn-pin-active { background:var(--amber-pale); color:var(--amber); border:1px solid rgba(200,134,10,0.45); }
   .btn-pin-active:hover { background:#f5dca0; }
+  .btn-lock-active { background:#fbe9e7; color:var(--red); border:1px solid rgba(192,57,43,0.45); }
+  .btn-lock-active:hover { background:#f8d7d3; }
 
   /* LAYOUT */
   .layout { display:grid; grid-template-columns:280px 1fr; height:calc(100vh - 60px); margin-top:60px; }
@@ -119,10 +122,11 @@
   .note-item { padding:0.85rem 1rem; cursor:pointer; border-left:3px solid transparent; transition:all 0.15s; position:relative; }
   .note-item:hover { background:var(--cream); border-left-color:var(--border); }
   .note-item.active { background:var(--amber-pale); border-left-color:var(--amber); }
-  /* Pinned note styling */
+  
   .note-item.pinned { background:linear-gradient(90deg, rgba(253,243,216,0.55) 0%, transparent 70%); }
   .note-item.pinned:hover { background:linear-gradient(90deg, rgba(240,192,96,0.35) 0%, var(--cream) 70%); border-left-color:var(--amber); }
   .note-item.pinned.active { background:var(--amber-pale); border-left-color:var(--amber); }
+  .note-item.locked .ni-title::after { content:' 🔒'; font-size:0.7rem; opacity:0.7; }
 
   .ni-title { font-size:0.88rem; font-weight:600; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:0.25rem; padding-right:1.6rem; }
   .ni-preview { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--ink-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:0.25rem; }
@@ -131,7 +135,7 @@
   .ni-cat { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--amber); background:var(--amber-pale); border-radius:10px; padding:0.05rem 0.4rem; }
   .ni-imgs { font-family:'DM Mono',monospace; font-size:0.6rem; color:var(--ink-light); background:var(--cream); border:1px solid var(--border); border-radius:10px; padding:0.05rem 0.4rem; }
 
-  /* Pin button on each note item */
+  /* Pin button */
   .ni-pin {
     position:absolute; top:0.6rem; right:0.6rem;
     width:24px; height:24px; border-radius:6px; border:none;
@@ -142,20 +146,17 @@
   }
   .note-item:hover .ni-pin { opacity:0.55; }
   .ni-pin:hover { background:rgba(200,134,10,0.15); color:var(--amber); opacity:1 !important; }
-  /* Pinned items: pin always visible + amber */
   .note-item.pinned .ni-pin { opacity:1; color:var(--amber); transform:rotate(-45deg); }
   .note-item.pinned .ni-pin:hover { transform:rotate(-45deg) scale(1.15); }
 
-  /* Small divider between pinned and unpinned sections */
+  /* Dividers */
   .pinned-divider {
     font-family:'DM Mono',monospace; font-size:0.58rem;
     text-transform:uppercase; letter-spacing:0.12em;
     color:var(--ink-muted); padding:0.5rem 1rem 0.3rem;
     display:flex; align-items:center; gap:0.5rem;
   }
-  .pinned-divider::after {
-    content:''; flex:1; height:1px; background:var(--border);
-  }
+  .pinned-divider::after { content:''; flex:1; height:1px; background:var(--border); }
   .pinned-divider.no-top { padding-top:0.2rem; }
 
   .empty-list { padding:2rem 1rem; text-align:center; color:var(--ink-muted); font-size:0.85rem; font-style:italic; line-height:1.8; }
@@ -171,21 +172,46 @@
   .toolbar-space { flex:1; }
   .unsaved-dot { width:7px; height:7px; border-radius:50%; background:var(--amber); display:none; }
   .unsaved-dot.show { display:block; }
+  .lock-badge { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--red); background:#fbe9e7; border:1px solid rgba(192,57,43,0.3); border-radius:10px; padding:0.15rem 0.55rem; display:none; }
+  .lock-badge.show { display:inline-flex; align-items:center; gap:0.25rem; }
 
   /* EDITOR */
   .editor-wrap { flex:1; display:flex; flex-direction:column; overflow:hidden; }
   #note-title { padding:1.3rem 2rem 0.4rem; font-family:'Fraunces',serif; font-size:1.9rem; font-weight:300; font-style:italic; color:var(--ink); background:transparent; border:none; outline:none; width:100%; border-bottom:1px solid transparent; transition:border-color 0.2s; flex-shrink:0; }
   #note-title:focus { border-bottom-color:var(--amber); }
   #note-title::placeholder { color:var(--ink-muted); }
+  
   .cat-row { display:flex; align-items:center; gap:0.6rem; padding:0.3rem 2rem 0.8rem; flex-shrink:0; }
   .cat-label { font-family:'DM Mono',monospace; font-size:0.68rem; color:var(--ink-muted); text-transform:uppercase; letter-spacing:0.1em; }
   #note-category { font-family:'DM Mono',monospace; font-size:0.72rem; color:var(--amber); background:var(--amber-pale); border:1px solid rgba(200,134,10,0.25); border-radius:20px; padding:0.2rem 0.8rem; outline:none; width:160px; transition:border-color 0.2s; }
   #note-category:focus { border-color:var(--amber); }
   #note-category::placeholder { color:rgba(200,134,10,0.4); }
+  
   #note-body { flex:1; padding:0 2rem 1rem; font-family:'Fraunces',serif; font-size:0.98rem; font-weight:300; line-height:1.95; color:var(--ink-light); background:transparent; border:none; outline:none; resize:none; overflow-y:auto; min-height:80px; }
   #note-body::-webkit-scrollbar { width:3px; }
   #note-body::-webkit-scrollbar-thumb { background:var(--border); }
   #note-body::placeholder { color:var(--ink-muted); font-style:italic; }
+
+  /* READ-ONLY (LOCKED) STYLING - UPDATED FOR HIGH CONTRAST */
+  #note-title:read-only,
+  #note-body:read-only,
+  #note-category:read-only {
+    color: var(--ink); /* High contrast dark ink */
+    cursor: default;
+  }
+  
+  #note-title:read-only { border-bottom-color: transparent !important; }
+  
+  #note-body:read-only { 
+    color: var(--ink-light); 
+    background: rgba(245, 240, 232, 0.4); /* Subtle tint to show it's read-only */
+  }
+
+  #note-category:read-only {
+    color: var(--amber) !important;
+    background: var(--amber-pale) !important;
+    opacity: 1;
+  }
 
   /* IMAGES BAR */
   .images-bar {
@@ -203,9 +229,8 @@
     cursor:pointer; transition:all 0.15s; position:relative;
   }
   .img-add-tile:hover { border-color:var(--amber); color:var(--amber); background:var(--amber-pale); }
-  .img-add-tile input[type=file] {
-    position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
-  }
+  .img-add-tile.disabled { opacity:0.4; cursor:not-allowed; pointer-events:none; }
+  .img-add-tile input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
   .img-thumb {
     position:relative; flex-shrink:0; width:56px; height:56px;
     border-radius:10px; overflow:hidden; border:1px solid var(--border);
@@ -225,6 +250,7 @@
     justify-content:center; opacity:0; transition:opacity 0.15s;
   }
   .img-thumb:hover .img-remove { opacity:1; }
+  .img-thumb.locked .img-remove { display:none; }
   .images-empty-hint { font-family:'DM Mono',monospace; font-size:0.65rem; color:var(--ink-muted); }
 
   /* META BAR */
@@ -282,7 +308,7 @@
     <h3 id="user-modal-title">Who's taking notes?</h3>
     <p id="user-modal-desc">Enter your name so your notes stay separate from everyone else's. You'll only see notes you created.</p>
     <select id="existing-users-select">
-      <option value="">— or choose existing user —</option>
+      <option value="">— Loading users… —</option>
     </select>
     <div class="or-divider">— or type a new name —</div>
     <input type="text" id="user-name-input" placeholder="e.g. Diovic" autocomplete="off">
@@ -380,8 +406,10 @@
       <div class="toolbar">
         <button class="btn btn-ghost btn-sm" id="back-btn">← Back</button>
         <button class="btn btn-ghost btn-sm" id="pin-btn" title="Pin this note to the top">📌 Pin</button>
+        <button class="btn btn-ghost btn-sm" id="lock-btn" title="Lock this note to prevent editing">🔓 Lock</button>
+        <span class="lock-badge" id="lock-badge">🔒 Locked</span>
         <div class="unsaved-dot" id="unsaved-dot"></div>
-        <span id="toolbar-label" style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--ink-muted);"></span>
+        <span id="toolbar-label" style="font-family:'DM Mono',monospace;font-size:0.7rem;color:var(--ink-light);"></span>
         <div class="toolbar-space"></div>
         <button class="btn btn-ghost btn-sm" id="save-btn">💾 Save</button>
         <button class="btn btn-red btn-sm" id="delete-btn">🗑 Delete</button>
@@ -407,7 +435,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, doc,
+  getFirestore, collection, addDoc, doc, getDocs,
   updateDoc, deleteDoc, onSnapshot, serverTimestamp, query, orderBy,
   increment
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -431,17 +459,14 @@ const db   = getFirestore(app);
 const rtdb = getDatabase(app);
 const COLL = "notes";
 const USER_STORAGE_KEY = "mynotes_current_user";
-const LEGACY_OWNER = "Diovic"; // notes created before multi-user support are treated as this user's
+const LEGACY_OWNER = "Diovic";
 
-// Image upload constraints — images are stored as base64 data URLs directly in the
-// Realtime Database at noteImages/{noteId}/{imageId}, since RTDB has no native blob storage.
-// Base64 inflates raw bytes by ~33%, so we compress harder than we would for a real object store.
-const MAX_IMAGE_MB = 5;                     // max size accepted from the file picker (pre-compression)
-const MAX_IMAGES_PER_NOTE = 20;             // guard against unbounded fan-out under a single note
-const MAX_ENCODED_CHARS = 7_000_000;        // ~5.25MB decoded; mirrors the RTDB rules validation below
-const COMPRESS_MAX_DIMENSION = 1280;        // px, longest side
-const COMPRESS_QUALITY = 0.75;              // JPEG quality
-const COMPRESS_SKIP_UNDER_BYTES = 150 * 1024; // don't bother compressing very small files
+const MAX_IMAGE_MB = 5;
+const MAX_IMAGES_PER_NOTE = 20;
+const MAX_ENCODED_CHARS = 7_000_000;
+const COMPRESS_MAX_DIMENSION = 1280;
+const COMPRESS_QUALITY = 0.75;
+const COMPRESS_SKIP_UNDER_BYTES = 150 * 1024;
 
 let allNotes = [];
 let currentId = null;
@@ -449,7 +474,8 @@ let isDirty = false;
 let deleteTarget = null;
 let currentUser = null;
 let listenerStarted = false;
-let imagesUnsub = null; // unsubscribe fn for the currently-open note's RTDB image listener
+let imagesUnsub = null;
+let knownUsers = new Set([LEGACY_OWNER]);
 
 // ── TOAST ──
 function toast(msg, type = 'info') {
@@ -492,7 +518,6 @@ function ownerMatchesCurrentUser(noteOwner) {
   const owner = normalizeUser(noteOwner);
   const me = normalizeUser(currentUser);
   if (!owner) {
-    // Legacy notes with no owner field belong to the legacy user (Diovic)
     return me.toLowerCase() === LEGACY_OWNER.toLowerCase();
   }
   return owner.toLowerCase() === me.toLowerCase();
@@ -510,30 +535,44 @@ function updateUserBadge() {
   document.getElementById('manage-users-btn').style.display = isDiovic() ? 'inline-flex' : 'none';
 }
 
-// Collect every known user across all notes, always including Diovic
-function getExistingUsers() {
-  const set = new Set([LEGACY_OWNER]);
-  allNotes.forEach(n => {
-    const o = normalizeUser(n.owner) || LEGACY_OWNER;
-    set.add(o);
-  });
-  return Array.from(set).sort((a,b) => a.localeCompare(b));
+// ── USER LIST (FIXED) ──
+async function refreshKnownUsers() {
+  try {
+    const snap = await getDocs(collection(db, COLL));
+    const set = new Set([LEGACY_OWNER]);
+    snap.forEach(d => {
+      const o = normalizeUser(d.data().owner) || LEGACY_OWNER;
+      set.add(o);
+    });
+    knownUsers = set;
+    return true;
+  } catch (e) {
+    console.warn('Could not refresh user list from Firestore:', e);
+    const set = new Set([LEGACY_OWNER, ...knownUsers]);
+    allNotes.forEach(n => {
+      const o = normalizeUser(n.owner) || LEGACY_OWNER;
+      set.add(o);
+    });
+    knownUsers = set;
+    return false;
+  }
 }
 
 function populateUserDropdown() {
   const select = document.getElementById('existing-users-select');
-  const users = getExistingUsers();
+  const users = Array.from(knownUsers).sort((a,b) => a.localeCompare(b));
   select.innerHTML = '<option value="">— or choose existing user —</option>' +
     users.map(u => `<option value="${esc(u)}">${esc(u)}</option>`).join('');
   select.value = '';
 }
 
-function openUserModal(isSwitch) {
+async function openUserModal(isSwitch) {
   const modal = document.getElementById('user-modal');
   const title = document.getElementById('user-modal-title');
   const desc = document.getElementById('user-modal-desc');
   const cancelBtn = document.getElementById('cancel-user');
   const input = document.getElementById('user-name-input');
+  const select = document.getElementById('existing-users-select');
 
   if (isSwitch) {
     title.textContent = 'Switch user';
@@ -546,8 +585,12 @@ function openUserModal(isSwitch) {
     cancelBtn.style.display = 'none';
     input.value = '';
   }
-  populateUserDropdown();
+  select.innerHTML = '<option value="">— Loading users… —</option>';
   modal.classList.add('show');
+
+  await refreshKnownUsers();
+  populateUserDropdown();
+
   setTimeout(() => input.focus(), 50);
 }
 
@@ -564,11 +607,11 @@ function confirmUser() {
   }
   const switchingUser = currentUser !== null && normalizeUser(currentUser).toLowerCase() !== name.toLowerCase();
   currentUser = name;
+  knownUsers.add(currentUser);
   localStorage.setItem(USER_STORAGE_KEY, currentUser);
   updateUserBadge();
   closeUserModal();
 
-  // Leaving the currently open note if it doesn't belong to the new user
   deselectNote();
 
   if (!listenerStarted) {
@@ -585,9 +628,10 @@ function confirmUser() {
 }
 
 // ── MANAGE / DELETE USER (Diovic only) ──
-function populateDeleteUserSelect() {
+async function populateDeleteUserSelect() {
   const select = document.getElementById('delete-user-select');
-  const users = getExistingUsers().filter(u => u.toLowerCase() !== LEGACY_OWNER.toLowerCase());
+  await refreshKnownUsers();
+  const users = Array.from(knownUsers).filter(u => u.toLowerCase() !== LEGACY_OWNER.toLowerCase()).sort((a,b) => a.localeCompare(b));
   if (!users.length) {
     select.innerHTML = '<option value="">No other users yet</option>';
   } else {
@@ -596,15 +640,17 @@ function populateDeleteUserSelect() {
   }
 }
 
-function openDeleteUserModal() {
+async function openDeleteUserModal() {
   if (!isDiovic()) {
     toast('Only Diovic can manage users.', 'error');
     return;
   }
-  populateDeleteUserSelect();
+  document.getElementById('delete-user-select').innerHTML = '<option value="">Loading…</option>';
   document.getElementById('delete-user-password').value = '';
   updateDeleteUserButtonState();
   document.getElementById('delete-user-modal').classList.add('show');
+  await populateDeleteUserSelect();
+  updateDeleteUserButtonState();
 }
 
 function closeDeleteUserModal() {
@@ -617,13 +663,11 @@ function updateDeleteUserButtonState() {
   document.getElementById('confirm-delete-user').disabled = !(user && pass === 'Delete');
 }
 
-// Best-effort cleanup of a note's images node in Realtime Database. Failures are logged, not
-// fatal — an orphaned images node is far less harmful than a delete operation that never completes.
 async function clearNoteImages(noteId) {
   try {
     await dbRemove(dbRef(rtdb, `noteImages/${noteId}`));
   } catch (e) {
-    console.warn(`Could not clear images for note ${noteId} (may already be gone):`, e);
+    console.warn(`Could not clear images for note ${noteId}:`, e);
   }
 }
 
@@ -655,6 +699,7 @@ async function confirmDeleteUser() {
         document.getElementById('empty-state').style.display = 'flex';
       }
     }
+    knownUsers.delete(targetUser);
     closeDeleteUserModal();
     toast(`User "${targetUser}" and ${notesToDelete.length} note(s) deleted.`, 'warning');
   } catch(e) {
@@ -671,17 +716,22 @@ function startListener() {
     snap => {
       setStatus(true, 'Connected');
       allNotes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allNotes.forEach(n => {
+        const o = normalizeUser(n.owner) || LEGACY_OWNER;
+        knownUsers.add(o);
+      });
       updateCounter();
       renderList();
       if (currentId && !allNotes.find(n => n.id === currentId && ownerMatchesCurrentUser(n.owner))) {
         deselectNote();
         toast('Note was deleted or is no longer available.','warning');
       } else if (currentId) {
-        // Keep the "updated" timestamp in sync with live changes (images sync via their own RTDB listener)
         const cur = allNotes.find(n => n.id === currentId);
         if (cur) {
           document.getElementById('meta-updated').textContent = 'Updated ' + (cur.updatedAt ? fmtDate(cur.updatedAt.toDate()) : '—');
           updatePinButton(cur.pinned === true);
+          updateLockButton(cur.locked === true);
+          applyLockState(cur.locked === true);
         }
       }
     },
@@ -696,15 +746,14 @@ function getVisibleNotes() {
   return allNotes.filter(n => ownerMatchesCurrentUser(n.owner));
 }
 
-// Sort: pinned first, then by updatedAt (descending). Notes without pinned field are treated as false.
 function sortNotesForDisplay(notes) {
   return [...notes].sort((a, b) => {
     const ap = a.pinned === true ? 1 : 0;
     const bp = b.pinned === true ? 1 : 0;
-    if (ap !== bp) return bp - ap; // pinned first
+    if (ap !== bp) return bp - ap;
     const at = a.updatedAt?.toMillis?.() ?? 0;
     const bt = b.updatedAt?.toMillis?.() ?? 0;
-    return bt - at; // newest first
+    return bt - at;
   });
 }
 
@@ -733,20 +782,20 @@ function renderList() {
     return;
   }
 
-  // Split pinned vs unpinned so we can insert a section divider
   const pinned = list.filter(n => n.pinned === true);
   const unpinned = list.filter(n => n.pinned !== true);
 
   const renderItem = (n) => {
     const active = n.id===currentId?' active':'';
     const pinnedClass = n.pinned === true ? ' pinned' : '';
+    const lockedClass = n.locked === true ? ' locked' : '';
     const date = n.updatedAt ? fmtDate(n.updatedAt.toDate()) : '—';
     const preview = (n.body||'').replace(/\n/g,' ').slice(0,65)||'No content';
     const catBadge = n.category ? `<span class="ni-cat">${esc(n.category)}</span>` : '';
     const imgCount = n.imageCount || 0;
     const imgBadge = imgCount ? `<span class="ni-imgs">📷 ${imgCount}</span>` : '';
     const pinTitle = n.pinned ? 'Unpin note' : 'Pin to top';
-    return `<div class="note-item${active}${pinnedClass}" data-id="${n.id}">
+    return `<div class="note-item${active}${pinnedClass}${lockedClass}" data-id="${n.id}">
       <button class="ni-pin" data-pin-id="${n.id}" title="${pinTitle}">📌</button>
       <div class="ni-title">${esc(n.title||'Untitled')}</div>
       <div class="ni-preview">${esc(preview)}</div>
@@ -797,6 +846,8 @@ function openNote(id) {
   document.getElementById('meta-created').textContent = 'Created ' + (n.createdAt ? fmtDate(n.createdAt.toDate()) : '—');
   document.getElementById('meta-updated').textContent = 'Updated ' + (n.updatedAt ? fmtDate(n.updatedAt.toDate()) : '—');
   updatePinButton(n.pinned === true);
+  updateLockButton(n.locked === true);
+  applyLockState(n.locked === true);
   attachImagesListener(id);
   updateWords();
   renderList();
@@ -815,10 +866,82 @@ function updatePinButton(isPinned) {
   }
 }
 
+// ── LOCK / UNLOCK ──
+function updateLockButton(isLocked) {
+  const btn = document.getElementById('lock-btn');
+  const badge = document.getElementById('lock-badge');
+  if (isLocked) {
+    btn.textContent = '🔒 Unlock';
+    btn.classList.add('btn-lock-active');
+    btn.title = 'Unlock this note to allow editing';
+    badge.classList.add('show');
+  } else {
+    btn.textContent = '🔓 Lock';
+    btn.classList.remove('btn-lock-active');
+    btn.title = 'Lock this note to prevent editing';
+    badge.classList.remove('show');
+  }
+}
+
+// Toggle read-only state on the editor fields & disable destructive actions
+function applyLockState(isLocked) {
+  const title = document.getElementById('note-title');
+  const body  = document.getElementById('note-body');
+  const cat   = document.getElementById('note-category');
+  const saveBtn = document.getElementById('save-btn');
+  const delBtn  = document.getElementById('delete-btn');
+
+  title.readOnly = isLocked;
+  body.readOnly  = isLocked;
+  cat.readOnly   = isLocked;
+
+  saveBtn.disabled = isLocked;
+  delBtn.disabled  = isLocked;
+  saveBtn.title = isLocked ? 'Unlock the note to save changes' : '';
+  delBtn.title  = isLocked ? 'Unlock the note to delete it' : '';
+
+  if (currentId) {
+    const bar = document.getElementById('images-bar');
+    bar.querySelectorAll('.img-thumb').forEach(t => t.classList.toggle('locked', isLocked));
+    const addTile = bar.querySelector('.img-add-tile');
+    if (addTile) addTile.classList.toggle('disabled', isLocked);
+  }
+}
+
+async function toggleLock(id) {
+  if (!id) return;
+  const note = allNotes.find(n => n.id === id);
+  if (!note) return;
+  if (!ownerMatchesCurrentUser(note.owner)) {
+    toast("You can't lock someone else's note.", 'error');
+    return;
+  }
+  const newLocked = note.locked !== true;
+  if (newLocked && isDirty) {
+    if (!confirm('You have unsaved changes. Lock the note anyway and discard them?')) return;
+  }
+  setLoading(true);
+  try {
+    await updateDoc(doc(db, COLL, id), {
+      locked: newLocked,
+      updatedAt: serverTimestamp()
+    });
+    note.locked = newLocked;
+    if (newLocked) {
+      isDirty = false;
+      document.getElementById('unsaved-dot').classList.remove('show');
+    }
+    updateLockButton(newLocked);
+    applyLockState(newLocked);
+    renderList();
+    toast(newLocked ? 'Note locked 🔒 — editing disabled' : 'Note unlocked 🔓', newLocked ? 'warning' : 'success');
+  } catch (e) {
+    toast('Error updating lock: ' + e.message, 'error');
+  }
+  setLoading(false);
+}
+
 // ── PIN / UNPIN ──
-// Pin state saves immediately to Firestore (not gated behind the Save button) so the
-// sidebar reorders right away. The pin does NOT mark the note as dirty — content changes
-// are still tracked separately.
 async function togglePin(id) {
   if (!id) return;
   const note = allNotes.find(n => n.id === id);
@@ -834,7 +957,6 @@ async function togglePin(id) {
       pinned: newPinned,
       updatedAt: serverTimestamp()
     });
-    // Optimistic local update so the UI reorders instantly
     note.pinned = newPinned;
     renderList();
     if (currentId === id) updatePinButton(newPinned);
@@ -854,11 +976,12 @@ async function newNote() {
   setLoading(true);
   try {
     const newDocRef = await addDoc(collection(db, COLL), {
-      title:'', body:'', category:'', imageCount: 0, pinned: false,
+      title:'', body:'', category:'', imageCount: 0, pinned: false, locked: false,
       owner: currentUser,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+    knownUsers.add(currentUser);
     currentId = newDocRef.id;
     isDirty = false;
     showEditor();
@@ -871,6 +994,8 @@ async function newNote() {
     document.getElementById('meta-created').textContent = 'Created just now';
     document.getElementById('meta-updated').textContent = 'Updated just now';
     updatePinButton(false);
+    updateLockButton(false);
+    applyLockState(false);
     attachImagesListener(currentId);
     updateWords();
     toast('New note created! 📝','success');
@@ -881,13 +1006,16 @@ async function newNote() {
 // ── SAVE NOTE ──
 async function saveNote() {
   if (!currentId) return;
+  const note = allNotes.find(n => n.id === currentId);
+  if (note && note.locked === true) {
+    toast('This note is locked. Unlock it first to save changes.', 'warning');
+    return;
+  }
   const title    = document.getElementById('note-title').value.trim();
   const body     = document.getElementById('note-body').value;
   const category = document.getElementById('note-category').value.trim();
   setLoading(true);
   try {
-    // owner is intentionally not touched here — a note keeps its original creator.
-    // pinned is also left alone — it's saved immediately by togglePin().
     await updateDoc(doc(db, COLL, currentId), { title, body, category, updatedAt: serverTimestamp() });
     isDirty = false;
     document.getElementById('unsaved-dot').classList.remove('show');
@@ -901,7 +1029,12 @@ async function saveNote() {
 // ── DELETE ──
 function openDelModal() {
   if (!currentId) return;
-  deleteTarget = currentId; // capture the ID to delete
+  const note = allNotes.find(n => n.id === currentId);
+  if (note && note.locked === true) {
+    toast('This note is locked. Unlock it first to delete.', 'warning');
+    return;
+  }
+  deleteTarget = currentId;
   document.getElementById('del-modal').classList.add('show');
 }
 
@@ -912,11 +1045,7 @@ function closeModal() {
 
 async function confirmDelete() {
   if (!deleteTarget) return;
-
-  // Save the target ID locally BEFORE closing the modal or nulling deleteTarget
   const idToDelete = deleteTarget;
-
-  // Close modal first (UI feedback)
   document.getElementById('del-modal').classList.remove('show');
   deleteTarget = null;
 
@@ -925,7 +1054,6 @@ async function confirmDelete() {
     await clearNoteImages(idToDelete);
     await deleteDoc(doc(db, COLL, idToDelete));
 
-    // Compare against the saved local variable, not the already-nulled deleteTarget
     if (currentId === idToDelete) {
       detachImagesListener();
       currentId = null;
@@ -953,6 +1081,11 @@ function deselectNote() {
 
 // ── DIRTY ──
 function markDirty() {
+  if (!currentId) return;
+  const note = allNotes.find(n => n.id === currentId);
+  if (note && note.locked === true) {
+    return;
+  }
   isDirty = true;
   document.getElementById('unsaved-dot').classList.add('show');
   updateWords();
@@ -969,8 +1102,7 @@ function showEditor() {
   document.getElementById('editor-panel').classList.add('show');
 }
 
-// ── IMAGES (stored as base64 data URLs in Realtime Database) ──
-
+// ── IMAGES ──
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -980,8 +1112,6 @@ function blobToDataUrl(blob) {
   });
 }
 
-// Downscale + re-encode large images client-side, then return a base64 data URL ready to
-// write straight into the Realtime Database. GIFs are read as-is to preserve animation.
 async function compressToDataUrl(file) {
   if (file.type === 'image/gif' || typeof createImageBitmap !== 'function') {
     return blobToDataUrl(file);
@@ -1013,6 +1143,10 @@ async function compressToDataUrl(file) {
 async function handleImageFiles(fileList) {
   if (!currentId) { toast('Open or create a note first.', 'warning'); return; }
   const note = allNotes.find(n => n.id === currentId);
+  if (note && note.locked === true) {
+    toast('This note is locked. Unlock it first to add images.', 'warning');
+    return;
+  }
   const existingCount = note?.imageCount || 0;
 
   const files = Array.from(fileList).filter(f => {
@@ -1057,6 +1191,11 @@ async function handleImageFiles(fileList) {
 
 async function removeImage(imageKey) {
   if (!currentId || !imageKey) return;
+  const note = allNotes.find(n => n.id === currentId);
+  if (note && note.locked === true) {
+    toast('This note is locked. Unlock it first to remove images.', 'warning');
+    return;
+  }
   if (!confirm('Remove this image? This cannot be undone.')) return;
 
   setLoading(true);
@@ -1073,7 +1212,6 @@ async function removeImage(imageKey) {
   setLoading(false);
 }
 
-// Live-syncs the open note's image strip with noteImages/{noteId} in Realtime Database.
 function attachImagesListener(noteId) {
   detachImagesListener();
   if (!noteId) return;
@@ -1083,7 +1221,8 @@ function attachImagesListener(noteId) {
     const list = Object.entries(val)
       .map(([key, v]) => ({ key, ...v }))
       .sort((a, b) => (a.uploadedAt || 0) - (b.uploadedAt || 0));
-    renderImages(list);
+    const note = allNotes.find(n => n.id === noteId);
+    renderImages(list, note && note.locked === true);
   }, err => {
     toast('Error loading images: ' + err.message, 'error');
   });
@@ -1093,24 +1232,24 @@ function detachImagesListener() {
   if (imagesUnsub) { imagesUnsub(); imagesUnsub = null; }
 }
 
-function renderImages(images) {
+function renderImages(images, isLocked) {
   const bar = document.getElementById('images-bar');
   const list = Array.isArray(images) ? images : [];
 
   const thumbs = list.map(img => `
-    <div class="img-thumb" data-key="${esc(img.key)}">
+    <div class="img-thumb${isLocked ? ' locked' : ''}" data-key="${esc(img.key)}">
       <img src="${img.dataUrl}" alt="${esc(img.name||'attached image')}" loading="lazy">
       <button class="img-remove" data-key="${esc(img.key)}" title="Remove image">✕</button>
     </div>
   `).join('');
 
   bar.innerHTML = `
-    <label class="img-add-tile" title="Add image (max ${MAX_IMAGE_MB}MB each)">
+    <label class="img-add-tile${isLocked ? ' disabled' : ''}" title="Add image (max ${MAX_IMAGE_MB}MB each)">
       ＋
       <input type="file" id="image-file-input" accept="image/*" multiple>
     </label>
     ${thumbs}
-    ${!list.length ? '<span class="images-empty-hint">Attach photos to this note</span>' : ''}
+    ${!list.length ? `<span class="images-empty-hint">${isLocked ? 'Note is locked 🔒' : 'Attach photos to this note'}</span>` : ''}
   `;
 
   document.getElementById('image-file-input').addEventListener('change', e => {
@@ -1151,6 +1290,10 @@ document.getElementById('pin-btn').addEventListener('click', () => {
   if (!currentId) return;
   togglePin(currentId);
 });
+document.getElementById('lock-btn').addEventListener('click', () => {
+  if (!currentId) return;
+  toggleLock(currentId);
+});
 document.getElementById('cancel-del').addEventListener('click', closeModal);
 document.getElementById('confirm-del').addEventListener('click', confirmDelete);
 document.getElementById('search-input').addEventListener('input', renderList);
@@ -1187,19 +1330,21 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// Ctrl+S / Cmd+S
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey||e.metaKey) && e.key==='s') { e.preventDefault(); saveNote(); }
 });
 
 // ── BOOTSTRAP ──
-(function init() {
+(async function init() {
   const saved = localStorage.getItem(USER_STORAGE_KEY);
   if (saved) {
     currentUser = normalizeUser(saved);
+    knownUsers.add(currentUser);
     updateUserBadge();
     startListener();
+    refreshKnownUsers();
   } else {
+    await refreshKnownUsers();
     openUserModal(false);
   }
 })();
